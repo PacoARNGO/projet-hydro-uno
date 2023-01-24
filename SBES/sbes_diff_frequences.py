@@ -43,7 +43,7 @@ def plot_hist(z_obs, xlabel = "", ylabel = "", title = "", fileo = "", bins=20):
     if fileo != "":
         plt.savefig(fileo)
 
-def plot_boxplot(z_obs, xlabel = "", title = "", fileo = ""):
+def plot_boxplot(z_obs, title = "", fileo = ""):
     """ Plot boxplot
 
         Parameters
@@ -70,10 +70,9 @@ def plot_boxplot(z_obs, xlabel = "", title = "", fileo = ""):
                 Titre du graphique."""
 
     # Boxplot
-    plt.figure(figsize=(16, 8))
+    plt.figure()
     plt.boxplot(z_obs)
-    plt.xlabel(xlabel)
-    plt.title(title, fontsize=16, fontweight='bold')
+    plt.title(title, fontsize=5, fontweight='bold')
     if fileo != "":
         plt.savefig(fileo)
 
@@ -163,6 +162,6 @@ if __name__ == '__main__':
 
 
     plot_boxplot(diff, title="Différence de mesure de profondeur entre le sondeur à 38kHz et le sondeur à 200 kHz", \
-                xlabel='mètres', fileo='images/difference_boxplot_38_200.png')
+                fileo='images/difference_boxplot_38_200.png')
 
 
