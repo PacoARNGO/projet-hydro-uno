@@ -136,11 +136,11 @@ plt.show()
 
 diff_tri_sans_nan = diff_tri.values[~np.isnan(diff_tri.values)]
 
-'''plt.figure()
+plt.figure()
 names = ['triangulation','nearneighbor','surface']
 plt.boxplot([diff_tri,diff_nearneighbor,diff_surface],labels=names)
 plt.title("comparaison des boxplots des méthodes d'interpolations avec les données multifaisceaux")
-plt.show()'''
+plt.show()
 
 
 def statistiques(val_interp, sol):
