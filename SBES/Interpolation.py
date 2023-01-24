@@ -19,8 +19,6 @@ def interpolation_linear38(pts, coord, X_grid, Y_grid):
 def interpolation_cubic(pts, coord, X_grid, Y_grid):
     return griddata(coord, pts, (X_grid,Y_grid), method='cubic' )
 """"""
-
-
 """Fonctions utiles"""
 def statistiques(interpolation, sol):
     me = np.nanmean(interpolation - sol)
