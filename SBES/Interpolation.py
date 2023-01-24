@@ -13,7 +13,7 @@ import inspect
 def interpolation_nearest(pts, coord, X_grid, Y_grid):
     return griddata(coord, pts, (X_grid,Y_grid), method='nearest' )
 
-def interpolation_linear(pts, coord, X_grid, Y_grid):
+def interpolation_linear38(pts, coord, X_grid, Y_grid):
     return griddata(coord, pts, (X_grid,Y_grid), method='linear' )
 
 def interpolation_cubic(pts, coord, X_grid, Y_grid):
@@ -80,7 +80,7 @@ def plot_interpolation(interpolateur, pts, multifaisceaux):
     plt.ylabel('Densité')
     plt.text(0.6, 6, r'RMSE={0:.3f}m'.format(rmse))
     plt.text(0.6, 5, r'Erreur_moyenne={0:.3f}m'.format(me))
-    plt.text(0.6, 4, r'Ecart_type={0:.3f}m'.format(std))
+    plt.text(0.6, 4, r'Ecart_type={0:.3f}m'.format(stde))
     plt.title("Boite à moustache interpolateur : {}".format(retrieve_name(interpolateur)))
     plt.savefig('Images/boite_moustache_{}.png'.format(retrieve_name(interpolateur).replace(' ', '_')))
     plt.show()
@@ -104,7 +104,7 @@ def histo_carte_diff(interpolateur, pts, multifaisceaux):
     normalize1 = CenteredNorm(0, halfrange=1)
     plt.pcolor(X, Y, difference, cmap=cmap, norm=normalize1)
     plt.colorbar(label='Différences profondeurs [m]')
-    plt.title("Carte des différence interpolateur : ".format(retrieve_name(interpolateur)))
+    plt.title("Carte des différences interpolateur : ".format(retrieve_name(interpolateur)))
     plt.xlabel('Est [m]')
     plt.ylabel('Nord [m]')
     plt.savefig('Images/Carte de différence{}.png'.format(retrieve_name(interpolateur).replace(' ', '_')))
@@ -122,11 +122,11 @@ def histo_carte_diff(interpolateur, pts, multifaisceaux):
 
 
 if __name__ == """__main__""":
-    FILENAME = 'data/ea400_200kilo.txt'
+    FILENAME = 'data/ea400_38kilo.txt'
     data = np.loadtxt(FILENAME, delimiter=',', skiprows=1)
     data_m = np.loadtxt('data/PortCommercePasseSante_Compile_2017a2022_GPSTide_30cm.xyz')
-    plot_interpolation(interpolation_linear, data, data_m)
-    histo_carte_diff(interpolation_linear, data, data_m)
+    plot_interpolation(interpolation_linear38, data, data_m)
+    histo_carte_diff(interpolation_linear38, data, data_m)
 
 
 
