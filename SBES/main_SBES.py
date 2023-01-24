@@ -43,11 +43,12 @@ grid_MBES = pygmt.xyz2grd(data_m, spacing=(0.3, 0.3), region=bornes_MBES)
 # print(grid_MBES)
 
 output_dataframe = pygmt.grdtrack(points=data, grid=grid_MBES)
+#  0 = X / 1 = Y / 2 = multi / 3 = Z_200 / 4  = Z_38 / 5 = Z_proc200
 # prend les colonnes x et y de multi et associe le z du mono
 # print(output_dataframe.info)
 
-output_dataframe['différence profondeur'] = output_dataframe[2] - output_dataframe[3]
-# print(output_dataframe['différence profondeur'])
+output_dataframe['différence profondeur']  = output_dataframe[2] - output_dataframe[3]
+#print(output_dataframe['différence profondeur'])
 
 '''Visualisation des écarts entre les sondes SBES et modèle MBES '''
 sc = plt.scatter(output_dataframe[0], output_dataframe[1], c=output_dataframe['différence profondeur'], cmap='seismic',
