@@ -57,6 +57,44 @@ def interpolate(interpolateur, pts, multifaisceaux):
 
     return interpolation, echantillon.x.values, echantillon.y.values, Z_multi
 
+def stats_nearneighbour(pts, multifaisceaux):
+    PAS_GRILLE = 1
+    bornes = pygmt.info(pts, spacing=PAS_GRILLE)
+    PAS_GRILLE = 1
+    secteurs = [2, 3, 4, 8]
+    rayon = 35
+    # Pour choper le sol uniquement
+    interpolation_cub, X, Y, sol = interpolate(interpolation_cubic, pts, multifaisceaux)
+    for secteur in secteurs:
+        inter_neigbour = pygmt.nearneighbor(data=pts, spacing=PAS_GRILLE, region=bornes, search_radius=rayon,
+                                            sectors=secteur)
+        interpolation_stat_neigh = inter_neigbour.values[~np.isnan(inter_neigbour.values)]
+        sol_stat_neigh = sol[~np.isnan(inter_neigbour.values)]
+        me_neigh, stde_neigh, rmse_neigh = statistiques(interpolation_stat_neigh, sol_stat_neigh)
+        print("______________statistique pour un secteur de {}______________".format(secteur))
+        print(f'Erreur moyenne : {me_neigh:.3f}m')
+        print(f'Écart-type : {stde_neigh:.3f}m')
+        print(f'RMSE : {rmse_neigh:.3f}m')
+def stats_nearneighbour2(pts, multifaisceaux):
+    PAS_GRILLE = 1
+    bornes = pygmt.info(pts, spacing=PAS_GRILLE)
+    PAS_GRILLE = 1
+    secteurs = 8
+    rayon = 35
+    nbr_secteurs_a_remplir = ['+m4', '+m6', '+m8']
+    # Pour choper le sol uniquement
+    interpolation_cub, X, Y, sol = interpolate(interpolation_cubic, pts, multifaisceaux)
+    for e in nbr_secteurs_a_remplir:
+
+        inter_neigbour = pygmt.nearneighbor(data=pts, spacing=PAS_GRILLE, region=bornes, search_radius=rayon,
+                                            sectors=str(secteurs)+e)
+        interpolation_stat_neigh = inter_neigbour.values[~np.isnan(inter_neigbour.values)]
+        sol_stat_neigh = sol[~np.isnan(inter_neigbour.values)]
+        me_neigh, stde_neigh, rmse_neigh = statistiques(interpolation_stat_neigh, sol_stat_neigh)
+        print("______________statistique avec +{}______________".format(e))
+        print(f'Erreur moyenne : {me_neigh:.3f}m')
+        print(f'Écart-type : {stde_neigh:.3f}m')
+        print(f'RMSE : {rmse_neigh:.3f}m')
 
 def stats(pts, multifaisceaux):
     #HEADLINE
@@ -76,11 +114,14 @@ def stats(pts, multifaisceaux):
     bornes = pygmt.info(pts, spacing=PAS_GRILLE)
     inter_tri = pygmt.triangulate.regular_grid(data=pts, spacing=PAS_GRILLE, region=bornes)
     inter_neigbour = pygmt.nearneighbor(data=pts, spacing=PAS_GRILLE, region=bornes, search_radius=rayon,
-                                        sectors=secteur)
+                                        sectors=str(secteur) + '+m6')
     df = pygmt.blockmean(data=pts, region=bornes, spacing=PAS_GRILLE)
     inter_surface = pygmt.surface(data=df, spacing=PAS_GRILLE, region=bornes, T=0.35, verbose="i")
-    inter_surface.values[np.isnan(inter_tri)] = np.nan
-    interpolation_near[np.isnan(inter_tri)] = np.nan
+    inter_surface.values[np.isnan(inter_neigbour)] = np.nan
+    interpolation_near[np.isnan(inter_neigbour)] = np.nan
+    inter_tri.values[np.isnan(inter_neigbour)] = np.nan
+    interpolation_cub[np.isnan(inter_neigbour)] = np.nan
+    interpolation_lin[np.isnan(inter_neigbour)] = np.nan
 
     ##Affichage
     #plt.figure()
@@ -288,40 +329,40 @@ def stats(pts, multifaisceaux):
     plt.figure()
     names = ['triangulation', 'nearneighbor', 'surface', 'nearest', 'linear', 'cubic']
     plt.boxplot([diff_tri, diff_neigh, diff_surf, difference_near, difference_lin, difference_cub], labels=names, showfliers=False)
-    plt.title("Comparaison des boxplots des méthodes d'interpolations avec les données multifaisceaux")
+    plt.title("Comparaison des boîtes à moustaches des méthodes d'interpolations avec les données multifaisceaux")
     plt.savefig('comparaison_interpolateur/comparaison_interpolateur_boite_moustache.png')
     plt.show()
     # Histogramme
-    fig, axes = plt.subplots(2, 3, sharex=True, sharey=True)
-    axes[0, 0].hist(difference_lin, bins=50, density=True)
+    fig, axes = plt.subplots(1, 3, sharex=True, sharey=True)
+    #axes[0, 0].hist(difference_lin, bins=50, density=True)
+    #plt.xlabel('Différences de profondeurs [m]')
+    #plt.ylabel('Densité')
+    #axes[0, 0].set_title('griddata, {}'.format(retrieve_name(interpolation_linear)))
+#
+    #axes[0, 1].hist(difference_near, bins=50, density=True)
+    #plt.xlabel('Différences de profondeurs [m]')
+    #plt.ylabel('Densité')
+    #axes[0, 1].set_title('griddata, {}'.format(retrieve_name(interpolation_nearest)))
+#
+    #axes[0, 2].hist(difference_cub, bins=50, density=True)
+    #plt.xlabel('Différences de profondeurs [m]')
+    #plt.ylabel('Densité')
+    #axes[0, 2].set_title('griddata, {}'.format(retrieve_name(interpolation_cubic)))
+    axes[0].hist(diff_tri, bins=50, density=True)
     plt.xlabel('Différences de profondeurs [m]')
     plt.ylabel('Densité')
-    axes[0, 0].set_title('griddata, {}'.format(retrieve_name(interpolation_linear)))
-
-    axes[0, 1].hist(difference_near, bins=50, density=True)
+    axes[0].set_title("Linéaire (triangulation)")
+#
+    axes[1].hist(diff_neigh, bins=50, density=True)
     plt.xlabel('Différences de profondeurs [m]')
     plt.ylabel('Densité')
-    axes[0, 1].set_title('griddata, {}'.format(retrieve_name(interpolation_nearest)))
-
-    axes[0, 2].hist(difference_cub, bins=50, density=True)
+    axes[1].set_title('Voisinages proches')
+#
+    axes[2].hist(diff_surf, bins=50, density=True)
     plt.xlabel('Différences de profondeurs [m]')
     plt.ylabel('Densité')
-    axes[0, 2].set_title('griddata, {}'.format(retrieve_name(interpolation_cubic)))
-    axes[1,0].hist(diff_tri, bins=50, density=True)
-    plt.xlabel('Différences de profondeurs [m]')
-    plt.ylabel('Densité')
-    axes[1,0].set_title('gmt, {}'.format(retrieve_name(diff_tri)))
-
-    axes[1,1].hist(diff_neigh, bins=50, density=True)
-    plt.xlabel('Différences de profondeurs [m]')
-    plt.ylabel('Densité')
-    axes[1,1].set_title('gmt, {}'.format(retrieve_name(diff_neigh)))
-
-    axes[1,2].hist(diff_surf, bins=50, density=True)
-    plt.xlabel('Différences de profondeurs [m]')
-    plt.ylabel('Densité')
-    axes[1,2].set_title('gmt, {}'.format(retrieve_name(diff_surf)))
-    plt.suptitle("Histogrammes méthodes griddata ")
+    axes[2].set_title("Spline d'interpolation")
+    plt.suptitle("Histogrammes")
     plt.savefig('comparaison_interpolateur/Histogrammes.png')
     plt.show()
 
@@ -333,27 +374,27 @@ def stats(pts, multifaisceaux):
     diff_neighbor = inter_neigbour - sol
     diff_surface = inter_surface - sol
     cmap = 'bwr'
-    fig, ax = plt.subplots(2, 3, figsize=(10, 6), constrained_layout=True)
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6), constrained_layout=True)
     # Normalisation avec définition du demi-intervalle
     normalize1 = CenteredNorm(0, halfrange=1)
-    c1 = ax[0, 0].pcolor(X, Y, diff_tri, cmap=cmap, norm=normalize1)
-    ax[0, 0].set(title='Différences triangulation')
-    plt.colorbar(c1, label='Différences profondeurs [m]', ax=ax[0, 0])
-    c2 = ax[0, 1].pcolor(X, Y, diff_neighbor, cmap=cmap, norm=normalize1)
-    ax[0, 1].set(title='Différences plus proche voisin')
-    plt.colorbar(c2, label='Différences profondeurs [m]', ax=ax[0, 1])
-    c31 = ax[0, 2].pcolor(X, Y, diff_surface, cmap=cmap, norm=normalize1)
-    ax[0, 2].set(title='Différences surface')
-    plt.colorbar(c31, label='Différences profondeurs [m]', ax=ax[0, 2])
-    c12 = ax[1,0].pcolor(X, Y, difference_n, cmap=cmap, norm=normalize1)
-    ax[1,0].set(title='Différences nearest')
-    plt.colorbar(c12, label='Différences profondeurs [m]', ax=ax[1, 0])
-    c22 = ax[1,1].pcolor(X, Y, difference_l, cmap=cmap, norm=normalize1)
-    ax[1,1].set(title='Différences linear')
-    plt.colorbar(c22, label='Différences profondeurs [m]', ax=ax[1, 1])
-    c32 = ax[1, 2].pcolor(X, Y, difference_c, cmap=cmap, norm=normalize1)
-    ax[1,2].set(title='Différences cubic')
-    plt.colorbar(c32, label='Différences profondeurs [m]', ax=ax[1,2])
+    #c1 = ax[0, 0].pcolor(X, Y, diff_tri, cmap=cmap, norm=normalize1)
+    #ax[0, 0].set(title='Différences triangulation')
+    #plt.colorbar(c1, label='Différences profondeurs [m]', ax=ax[0, 0])
+    c2 = ax[0].pcolor(X, Y, diff_neighbor, cmap=cmap, norm=normalize1)
+    ax[0].set(title='Différences plus proche voisin')
+    plt.colorbar(c2, label='Différences profondeurs [m]', ax=ax[0])
+    c31 = ax[1].pcolor(X, Y, diff_surface, cmap=cmap, norm=normalize1)
+    ax[1].set(title="Différences spline d'interpolation")
+    plt.colorbar(c31, label='Différences profondeurs [m]', ax=ax[1])
+    #c12 = ax[1,0].pcolor(X, Y, difference_n, cmap=cmap, norm=normalize1)
+    #ax[1,0].set(title='Différences nearest')
+    #plt.colorbar(c12, label='Différences profondeurs [m]', ax=ax[1, 0])
+    #c22 = ax[1,1].pcolor(X, Y, difference_l, cmap=cmap, norm=normalize1)
+    #ax[1,1].set(title='Différences linear')
+    #plt.colorbar(c22, label='Différences profondeurs [m]', ax=ax[1, 1])
+    #c32 = ax[1, 2].pcolor(X, Y, difference_c, cmap=cmap, norm=normalize1)
+    #ax[1,2].set(title='Différences cubic')
+    #plt.colorbar(c32, label='Différences profondeurs [m]', ax=ax[1,2])
     plt.suptitle('Différences interpolation / solution multifaisceaux')
     for axe in ax.flat:
         axe.set(xlabel='Est [m]', ylabel='Nord [m]')
