@@ -57,8 +57,27 @@ def interpolate(interpolateur, pts, multifaisceaux):
 
     return interpolation, echantillon.x.values, echantillon.y.values, Z_multi
 
+def stats_nearneighbour(pts, multifaisceaux):
+    PAS_GRILLE = 1
+    bornes = pygmt.info(pts, spacing=PAS_GRILLE)
+    PAS_GRILLE = 1
+    secteurs = [2, 3]
+    rayon = 35
+    # Pour choper le sol uniquement
+    interpolation_cub, X, Y, sol = interpolate(interpolation_cubic, pts, multifaisceaux)
+    for secteur in secteurs:
+        inter_neigbour = pygmt.nearneighbor(data=pts, spacing=PAS_GRILLE, region=bornes, search_radius=rayon,
+                                            sectors=secteur)
+        interpolation_stat_neigh = inter_neigbour.values[~np.isnan(inter_neigbour.values)]
+        sol_stat_neigh = sol[~np.isnan(inter_neigbour.values)]
+        me_neigh, stde_neigh, rmse_neigh = statistiques(interpolation_stat_neigh, sol_stat_neigh)
+        print("______________statistique pour un secteur de {}______________".format(secteur))
+        print(f'Erreur moyenne : {me_neigh:.3f}m')
+        print(f'Écart-type : {stde_neigh:.3f}m')
+        print(f'RMSE : {rmse_neigh:.3f}m')
 
 def stats(pts, multifaisceaux):
+
     #HEADLINE
 
     #bornes_MBES = pygmt.info(multifaisceaux, spacing=0.3)  # pas de grille 30 cm
@@ -370,4 +389,4 @@ if __name__ == """__main__""":
     FILENAME = 'data/ea400_200kilo.txt'
     data = np.loadtxt(FILENAME, delimiter=',', skiprows=1)
     data_m = np.loadtxt('data/PortCommercePasseSante_Compile_2017a2022_GPSTide_30cm.xyz')
-    stats(data, data_m)
+    stats_nearneighbour(data, data_m)
